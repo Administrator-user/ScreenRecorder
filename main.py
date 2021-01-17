@@ -39,6 +39,7 @@ class grabWindow(QWidget):
             self.setWindowFlags(Qt.FramelessWindowHint)
             self.setWindowOpacity(0.9)
             self.setAttribute(Qt.WA_TranslucentBackground)
+            self.setAcceptDrops(True)
 
             #标题栏
             titleBar = QWidget(self)
@@ -156,14 +157,223 @@ class grabWindow(QWidget):
             ''')
             recbtn.setFixedSize(width*0.15,width*0.15)
             recbtn.move(width*0.02,height*0.03)
+            #全屏/部分录制
+            areaTitle = QLabel("区域设置",contents)
+            areaTitle.setFixedSize(width*0.07,height*0.03)
+            areaTitle.setStyleSheet('''
+            QLabel{
+                  background:transparent;
+                  font-family:Microsoft YaHei;
+                  font-size:45px;
+                  color:#0088ff;
+                  border:none;
+            }
+            ''')
+            areaTitle.move(width*0.19,height*0.03)
+            fullScreen = QRadioButton("全屏录制",contents)
+            fullScreen.setStyleSheet('''
+            QRadioButton{
+                  background:transparent;
+                  border:none;
+                  font-family:Microsoft YaHei;
+                  font-size:35px;
+            }
+            QRadioButton:indicator{
+                  background:#ececec;
+                  border:2px solid #000000;
+                  border-radius:15px;
+            }
+            QRadioButton::indicator:checked{
+                  background:#0099ff;
+                  border:2px solid #000000;
+            }
+            QRadioButton::indicator::unchecked{
+                  background:#ececec;
+                  border:2px solid #000000;
+            }
+            ''')
+            fullScreen.setChecked(True)
+            fullScreen.setFixedSize(width*0.1,height*0.03)
+            fullScreen.move(width*0.195,height*0.08)
+            tickScreen = QRadioButton("区域录制",contents)
+            tickScreen.setStyleSheet('''
+            QRadioButton{
+                  background:transparent;
+                  border:none;
+                  font-family:Microsoft YaHei;
+                  font-size:35px;
+            }
+            QRadioButton:indicator{
+                  background:#ececec;
+                  border:2px solid #000000;
+                  border-radius:15px;
+            }
+            QRadioButton::indicator:checked{
+                  background:#0099ff;
+                  border:2px solid #000000;
+            }
+            QRadioButton::indicator::unchecked{
+                  background:#ececec;
+                  border:2px solid #000000;
+            }
+            ''')
+            tickScreen.setFixedSize(width*0.1,height*0.03)
+            tickScreen.move(width*0.195,height*0.11)
+            #选区宽/高/坐标设置
+            tickWidth = QLineEdit(contents)
+            tickWidth.setAlignment(Qt.AlignCenter)
+            tickWidth.setValidator(QIntValidator(1,width,self))
+            tickWidth.setText(str(int(width*0.5)))
+            tickWidth.setStyleSheet('''
+            QLineEdit{
+                  backcground:#ececec;
+                  border-style:outset;
+                  border-radius:10px;
+                  border-color:#008dd7;
+                  border-width:2px;
+                  font-family:Microsoft YaHei;
+                  font-size:30px;
+            }
+            ''')
+            tickWidth.setFixedSize(width*0.05,height*0.03)
+            tickWidth.move(width*0.26,height*0.11)
+            tickMulti = QLabel("*",contents)
+            tickMulti.setStyleSheet('''
+            QLabel{
+                  font-family:Microsoft YaHei;
+                  font-size:30px;
+                  border:none
+            }
+            ''')
+            tickMulti.setFixedSize(width*0.005,height*0.03)
+            tickMulti.move(width*0.312,height*0.11)
+            tickHeight = QLineEdit(contents)
+            tickHeight.setAlignment(Qt.AlignCenter)
+            tickHeight.setValidator(QIntValidator(1,height,self))
+            tickHeight.setText(str(int(height*0.5)))
+            tickHeight.setStyleSheet('''
+            QLineEdit{
+                  backcground:#ececec;
+                  border-style:outset;
+                  border-radius:10px;
+                  border-color:#008dd7;
+                  border-width:2px;
+                  font-family:Microsoft YaHei;
+                  font-size:30px;
+            }
+            ''')
+            tickHeight.setFixedSize(width*0.05,height*0.03)
+            tickHeight.move(width*0.317,height*0.11)
+            #录制区域X/Y坐标
+            posLabel = QLabel("坐标:",contents)
+            posLabel.setStyleSheet('''
+            QLabel{
+                  font-family:Microsoft YaHei;
+                  font-size:35px;
+                  border:none;
+            }
+            ''')
+            posLabel.setFixedSize(width*0.03,height*0.03)
+            posLabel.move(width*0.233,height*0.142)
+            #区域X坐标
+            tickPosX = QLineEdit(contents)
+            tickPosX.setAlignment(Qt.AlignCenter)
+            tickPosX.setValidator(QIntValidator(1,height,self))
+            tickPosX.setText("0")
+            tickPosX.setStyleSheet('''
+            QLineEdit{
+                  backcground:#ececec;
+                  border-style:outset;
+                  border-radius:10px;
+                  border-color:#008dd7;
+                  border-width:2px;
+                  font-family:Microsoft YaHei;
+                  font-size:30px;
+            }
+            ''')
+            tickPosX.setFixedSize(width*0.05,height*0.03)
+            tickPosX.move(width*0.26,height*0.142)
+            #间隔符
+            tickInterval = QLabel(",",contents)
+            tickInterval.setStyleSheet('''
+            QLabel{
+                  font-family:Microsoft YaHei;
+                  font-size:30px;
+                  border:none
+            }
+            ''')
+            tickInterval.setFixedSize(width*0.005,height*0.03)
+            tickInterval.move(width*0.312,height*0.144)
+            #区域Y坐标
+            tickPosY = QLineEdit(contents)
+            tickPosY.setAlignment(Qt.AlignCenter)
+            tickPosY.setValidator(QIntValidator(1,height,self))
+            tickPosY.setText("0")
+            tickPosY.setStyleSheet('''
+            QLineEdit{
+                  background:#ececec;
+                  border-style:outset;
+                  border-radius:10px;
+                  border-color:#008dd7;
+                  border-width:2px;
+                  font-family:Microsoft YaHei;
+                  font-size:30px;
+            }
+            ''')
+            tickPosY.setFixedSize(width*0.05,height*0.03)
+            tickPosY.move(width*0.317,height*0.142)
+            #录制区域预览
+            tickShow = QLabel(contents)
+            tickShow.setFixedSize(width*0.25,height*0.25)
+            tickShow.move(width*0.37,height*0.03)
+            tickImage = ImageGrab.grab()
+            tickImage.save("tickShot.jpg")
+            tickShow.setStyleSheet('''
+            QLabel{
+                  background:#ececec;
+                  border-style:outset;
+                  border-radius:10px;
+                  border-image:url(./tickShot.jpg);
+            }
+            ''')
+            tickArea = QWidget(contents)
+            tickArea.setStyleSheet('''
+            QWidget{
+                  background:#0088ff;
+                  border:style:outset;
+                  border-radius:0px;
+            }
+            ''')
+            tickArea.setFixedSize(width*0.125,height*0.125)
+            tickArea.move(tickShow.x(),tickShow.y())
+            #录制区域元组
+            self.recordBox = (int(tickPosX.text()),int(tickPosY.text()),
+                              int(tickPosX.text())+int(tickWidth.text()),
+                              int(tickPosY.text())+int(tickHeight.text()))
+            def changeTick():
+                  try:
+                        tickArea.setFixedSize(int(tickWidth.text())*0.25,
+                                              int(tickHeight.text())*0.25)
+                        tickArea.move(tickShow.x()+int(tickPosX.text())*0.25,
+                                      tickShow.y()+int(tickPosY.text())*0.25)
+                        self.recordBox = (int(tickPosX.text()),int(tickPosY.text()),
+                                     int(tickPosX.text())+int(tickWidth.text()),
+                                     int(tickPosY.text())+int(tickHeight.text()))
+                  except:
+                        pass
+            tickWidth.textChanged.connect(changeTick)
+            tickHeight.textChanged.connect(changeTick)
+            tickPosX.textChanged.connect(changeTick)
+            tickPosY.textChanged.connect(changeTick)
             #录制组件
             recWidget = QWidget(self)
             recWidget.setFixedSize(width*0.4,height*0.05)
             recWidget.setStyleSheet('''
             QWidget{
                   background:#ececec;
+                  border:none;
                   border-style:outset;
-                  border-radius:15px;
+                  border-radius:10px;
                   border-color:#008dd7;
                   border-width:3px;
             }
@@ -291,11 +501,17 @@ class grabWindow(QWidget):
             #录制功能
             def record():
                   fps = 24#帧率
-                  wait = 1/fps
                   start = 3#延时
-                  currentScreen = ImageGrab.grab()
+                  recordTick = tickScreen.isChecked()
+                  if recordTick:
+                        currentScreen = ImageGrab.grab(self.recordBox)#获取区域
+                  else:
+                        currentScreen = ImageGrab.grab()#获取全屏
                   heightS,widthS = currentScreen.size
-                  video = cv2.VideoWriter("testVideo.avi",cv2.VideoWriter_fourcc(*"XVID"),
+                  currentTime = time.localtime()
+                  recTime = time.strftime("%Y%m%d-%H%M%S",currentTime)
+                  videoName = "videos/"+recTime+".avi"
+                  video = cv2.VideoWriter(videoName,cv2.VideoWriter_fourcc(*"XVID"),
                                           fps,(heightS,widthS))#创建视频
                   imgNum = 0
                   recTimer.display(start)
@@ -307,7 +523,10 @@ class grabWindow(QWidget):
                   while True:
                         if self.isRecording:
                               imgNum += 1
-                              captureImg = ImageGrab.grab()#获取屏幕
+                              if recordTick:
+                                    captureImg = ImageGrab.grab(self.recordBox)#获取区域
+                              else:
+                                    captureImg = ImageGrab.grab()#获取全屏
                               frame = cv2.cvtColor(np.array(captureImg),cv2.COLOR_RGB2BGR)
                               video.write(frame)#写入视频
                         if self.escRec:
@@ -346,5 +565,9 @@ class grabWindow(QWidget):
 
 if __name__ == "__main__":
       app = QApplication(sys.argv)
+      print('''
+ScreenRecorder-v1.0.0
+made by Administrator-user
+Loading project...''')
       window = grabWindow()
       sys.exit(app.exec)

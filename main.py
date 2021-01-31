@@ -7,6 +7,7 @@ import threading
 import time
 import cv2
 import sys
+import os
 
 class grabWindow(QWidget):
       def __init__(self):
@@ -26,6 +27,9 @@ class grabWindow(QWidget):
       def mouseReleaseEvent(self, QMouseEvent):
             self.m_flag=False
             self.setCursor(QCursor(Qt.ArrowCursor))
+      def closeEvent(self,event):
+            os.remove("TempFiles/tickShot.jpg")
+            event.accept()
 
       def createGui(self):
             #获取屏幕大小
@@ -34,7 +38,7 @@ class grabWindow(QWidget):
             height = desktop.height()
             #设置窗口大小+标题+图标+无边框+透明度
             self.setFixedSize(width*0.66,height*0.75)
-            self.setWindowTitle("​")
+            self.setWindowTitle("ScreenRecorder-v1.0.0")
             self.setWindowIcon(QIcon("./icon.png"))
             self.setWindowFlags(Qt.FramelessWindowHint)
             self.setWindowOpacity(0.9)
@@ -327,44 +331,183 @@ class grabWindow(QWidget):
             tickShow.setFixedSize(width*0.25,height*0.25)
             tickShow.move(width*0.37,height*0.03)
             tickImage = ImageGrab.grab()
-            tickImage.save("tickShot.jpg")
+            tickImage.save("TempFiles/tickShot.jpg")
             tickShow.setStyleSheet('''
             QLabel{
                   background:#ececec;
                   border-style:outset;
                   border-radius:10px;
-                  border-image:url(./tickShot.jpg);
+                  border-image:url(./TempFiles/tickShot.jpg);
             }
             ''')
             tickArea = QWidget(contents)
+            tickAreaOpacity = QGraphicsOpacityEffect()
+            tickAreaOpacity.setOpacity(0.6)
+            tickArea.setGraphicsEffect(tickAreaOpacity)
+            tickArea.setAutoFillBackground(True)
             tickArea.setStyleSheet('''
             QWidget{
-                  background:#0088ff;
-                  border:style:outset;
-                  border-radius:0px;
+                  background:#ececec;
+                  border-style:outset;
+                  border-radius:2px;
+                  border:3px dashed #0088ff;
             }
             ''')
             tickArea.setFixedSize(width*0.125,height*0.125)
             tickArea.move(tickShow.x(),tickShow.y())
-            #录制区域元组
-            self.recordBox = (int(tickPosX.text()),int(tickPosY.text()),
-                              int(tickPosX.text())+int(tickWidth.text()),
-                              int(tickPosY.text())+int(tickHeight.text()))
+            #录制区域获取
             def changeTick():
                   try:
-                        tickArea.setFixedSize(int(tickWidth.text())*0.25,
-                                              int(tickHeight.text())*0.25)
-                        tickArea.move(tickShow.x()+int(tickPosX.text())*0.25,
-                                      tickShow.y()+int(tickPosY.text())*0.25)
-                        self.recordBox = (int(tickPosX.text()),int(tickPosY.text()),
-                                     int(tickPosX.text())+int(tickWidth.text()),
-                                     int(tickPosY.text())+int(tickHeight.text()))
+                        if tickScreen.isChecked():
+                              #判断是否超出范围
+                              if int(tickWidth.text()) > width:
+                                    tickWidth.setText(str(width))
+                              if int(tickHeight.text()) > height:
+                                    tickHeight.setText(str(height))
+                              if int(tickPosX.text()) > width-int(tickWidth.text()):
+                                    tickPosX.setText(str(width-int(tickWidth.text())))
+                              if int(tickPosY.text()) > height-int(tickHeight.text()):
+                                    tickPosY.setText(str(height-int(tickHeight.text())))
+                              #设置预览窗口大小
+                              tickArea.setFixedSize(int(tickWidth.text())*0.25,
+                                                    int(tickHeight.text())*0.25)
+                              tickArea.move(tickShow.x()+int(tickPosX.text())*0.25,
+                                            tickShow.y()+int(tickPosY.text())*0.25)
+                              self.recordBox = (int(tickPosX.text()),int(tickPosY.text()),
+                                           int(tickPosX.text())+int(tickWidth.text()),
+                                           int(tickPosY.text())+int(tickHeight.text()))
+                        else:
+                              tickArea.setFixedSize(width*0.25,height*0.25)
+                              tickArea.move(tickShow.x(),tickShow.y())
+                              self.recordBox = (0,0,width,height)
                   except:
                         pass
+            changeTick()
             tickWidth.textChanged.connect(changeTick)
             tickHeight.textChanged.connect(changeTick)
             tickPosX.textChanged.connect(changeTick)
             tickPosY.textChanged.connect(changeTick)
+            fullScreen.toggled.connect(changeTick)
+            tickScreen.toggled.connect(changeTick)
+            #录制列表
+            recTabs = QTabWidget(contents)
+            recTabs.setIconSize(QSize(50,50))
+            recTabs.setMovable(True)
+            recTabs.setStyleSheet('''
+            QTabWidget{
+                  background:transparent;
+                  border:none;
+            }
+            QTabWidget:tab-bar{
+                  border:0px;
+            }
+            QTabBar{
+                  border:none;
+            }
+            QTabBar:tab{
+                  background:#0088ff;
+                  border:none;
+                  border-style:outset;
+                  border-radius:0px;
+                  border-width:0px;
+                  border-top-left-radius:15px;
+                  border-top-right-radius:15px;
+                  min-width:170px;
+                  min-height:70px;
+                  font-family:Microsoft YaHei;
+                  font-size:30px;
+                  color:#000000;
+                  padding:0px;
+                  margin-left:3px;
+            }
+            QTabBar::tab:hover{
+                  background:#22aefa;
+                  color:#222222;
+            }
+            QTabBar::tab:selected{
+                  background:#33cffb;
+                  color:#333333;
+            }
+            ''')
+            recTabs.setFixedSize(width*0.66,height*0.41)
+            recTabs.move(0,height*0.3)
+            videosWidget = QWidget()
+            recTabs.addTab(videosWidget,
+                           QIcon("./ctrlButtons/videoList/listTabIcon.svg"),"视频列表")
+            videoTable = QTableWidget(0,5,videosWidget)
+            videoTable.setHorizontalHeaderLabels(["名称","类型","录制时间","时长","大小"])
+            videoTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            videoTable.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+            videoTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+            videoTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            videoTable.setStyleSheet('''
+            QTableWidget{
+                  border:none;
+                  border-style:outset;
+                  border-radius:10px;
+                  border-width:2px;
+                  border-color:#0088ff;
+            }
+            QTableWidget:item{
+                  font-family:Microspft YaHei;
+                  font-size:25px;
+                  background:#ececec;
+                  color:#000000;
+            }
+            QTableWidget::item:selected{
+                  background:#66aaff;
+                  color:#222222;
+            }
+            ''')
+            videoTable.horizontalHeader().setStyleSheet('''
+            QHeaderView{
+                  border:none;
+                  border-style:outset;
+                  border-radius:0px;
+                  border-top-left-radius:5px;
+                  border-top-right-radius:5px;
+                  border-color:#0088ff;
+                  border-width:2px;
+            }
+            QHeaderView:section{
+                  font-family:Microsoft YaHei;
+                  font-size:25px;
+            }
+            ''')
+            videoTable.horizontalHeader().setHighlightSections(False)
+            videoTable.verticalHeader().setStyleSheet('''
+            QHeaderView{
+                  border:none;
+                  border-style:outset;
+                  border-radius:0px;
+                  border-top-left-radius:5px;
+                  border-bottom-left-radius:5px;
+                  border-color:#0088ff;
+                  border-width:2px;
+            }
+            QHeaderView:section{
+                  font-family:Consolas;
+                  font-size:25px;
+            }
+            ''')
+            videoTable.setFixedSize(width*0.645,height*0.32)
+            videoTable.move(width*0.005,height*0.01)
+            videoTips = QWidget(videosWidget)
+            videoTips.setStyleSheet('''
+            QWidget{
+                  border:none;
+                  background:#transparent;
+                  border-radius:15px;
+                  border-image:url(./ctrlButtons/videoList/tipsImage.png);
+            }
+            ''')
+            videoTips.setFixedSize(width*0.215,height*0.24)
+            videoTips.move(width*0.22,height*0.07)
+            if videoTable.rowCount() < 1:
+                  videoTips.show()
+            else:
+                  videoTips.hide()
+            
             #录制组件
             recWidget = QWidget(self)
             recWidget.setFixedSize(width*0.4,height*0.05)
@@ -414,8 +557,32 @@ class grabWindow(QWidget):
             stopbtn.setShortcut("Ctrl+Q")
             stopbtn.setFixedSize(width*0.02,width*0.02)
             stopbtn.move(width*0.135,height*0.01)
+            #格式化文件大小
+            def formatSize(size):
+                  resultSize = size
+                  units = ["B","KB","MB","GB"]
+                  unitIndex = 0
+                  while resultSize >= 1:
+                        resultSize /= 1024
+                        unitIndex += 1
+                  resultSize *= 1024
+                  unitIndex -= 1
+                  unit = units[unitIndex]
+                  result = str(round(resultSize,2))+unit
+                  return result
+            #添加行
+            def addInfo(itemName,itemDate,itemTime):
+                  rowsPlus = videoTable.rowCount()+1
+                  videoTable.setRowCount(rowsPlus)
+                  videoTable.setItem(rowsPlus-1,0,QTableWidgetItem(itemName))
+                  videoTable.setItem(rowsPlus-1,1,QTableWidgetItem("avi文件"))
+                  videoTable.setItem(rowsPlus-1,2,QTableWidgetItem(itemDate))
+                  videoTable.setItem(rowsPlus-1,3,QTableWidgetItem(itemTime))
+                  itemSize = formatSize(os.path.getsize("videos/"+itemName))
+                  videoTable.setItem(rowsPlus-1,4,QTableWidgetItem(itemSize))
             def stopRecord():
                   self.escRec = True
+                  #还原窗口
                   self.setFixedSize(width*0.66,height*0.75)
                   self.move(stopGrabX,stopGrabY)
                   titleBar.show()
@@ -424,6 +591,15 @@ class grabWindow(QWidget):
                   minbtn.setEnabled(True)
                   maxbtn.setEnabled(True)
                   closebtn.setEnabled(True)
+                  #删除空行
+                  for n in range(videoTable.rowCount()):
+                        if not videoTable.item(n,0).text():
+                              videoTable.removeRow(n)
+                  #判断行数
+                  if videoTable.rowCount() < 1:
+                        videoTips.show()
+                  else:
+                        videoTips.hide()
             stopbtn.clicked.connect(stopRecord)
             #暂停录制
             pausebtn = QToolButton(recWidget)
@@ -447,6 +623,7 @@ class grabWindow(QWidget):
             pausebtn.setShortcut("Ctrl+P")
             pausebtn.setFixedSize(width*0.02,width*0.02)
             pausebtn.move(width*0.11,height*0.01)
+            #暂停录制
             def determinePause():
                   if self.isRecording:
                         pausebtn.setStyleSheet('''
@@ -484,11 +661,13 @@ class grabWindow(QWidget):
                         self.isRecording = True
             pausebtn.clicked.connect(determinePause)
             #时间记录
+            self.returnTime = "00:00"
             def displayTime():
                   global recTime
                   recTime = 0
+                  self.returnTime = "00:00"
                   while True:
-                        if self.isRecording:
+                        if self.isRecording or not self.escRec:
                               time.sleep(1)
                               recTime += 1
                               recMin = str(int(recTime/60))
@@ -497,7 +676,11 @@ class grabWindow(QWidget):
                                     recMin = "0"+str(recMin)
                               if int(recSec)<10:
                                     recSec = "0"+str(recSec)
-                              recTimer.display(recMin+":"+recSec)
+                              self.returnTime = recMin+":"+recSec
+                              recTimer.display(self.returnTime)
+                        else:
+                              recTime = 0
+                              break
             #录制功能
             def record():
                   fps = 24#帧率
@@ -510,6 +693,8 @@ class grabWindow(QWidget):
                   heightS,widthS = currentScreen.size
                   currentTime = time.localtime()
                   recTime = time.strftime("%Y%m%d-%H%M%S",currentTime)
+                  stopName = recTime+".avi"
+                  stopDate = time.strftime("%Y/%m/%d %H:%M:%S",currentTime)
                   videoName = "videos/"+recTime+".avi"
                   video = cv2.VideoWriter(videoName,cv2.VideoWriter_fourcc(*"XVID"),
                                           fps,(heightS,widthS))#创建视频
@@ -518,7 +703,8 @@ class grabWindow(QWidget):
                   for i in range(start):
                         time.sleep(1)
                         recTimer.display(start-i)
-                  timerThread = threading.Thread(target=displayTime)
+                  timerThread = threading.Thread(target=displayTime,
+                                                 name="TimeDisplay")
                   timerThread.start()
                   while True:
                         if self.isRecording:
@@ -531,9 +717,11 @@ class grabWindow(QWidget):
                               video.write(frame)#写入视频
                         if self.escRec:
                               break
+                  addInfo(stopName,stopDate,self.returnTime)
                   stopRecord()
                   video.release()
                   cv2.destroyAllWindows()
+                  time.sleep(0.3)
             def grabReady():
                   try:
                         global stopGrabX
@@ -548,9 +736,10 @@ class grabWindow(QWidget):
                         minbtn.setEnabled(False)
                         maxbtn.setEnabled(False)
                         closebtn.setEnabled(False)
-                        escRec = False
+                        self.escRec = False
                         isRecording = True
-                        recordThread = threading.Thread(target=record)
+                        recordThread = threading.Thread(target=record,
+                                                        name="Recorder")
                         recordThread.start()
                   except Exception as exc:
                         print(exc)
@@ -565,8 +754,7 @@ class grabWindow(QWidget):
 
 if __name__ == "__main__":
       app = QApplication(sys.argv)
-      print('''
-ScreenRecorder-v1.0.0
+      print('''ScreenRecorder v2.0.0
 made by Administrator-user
 Loading project...''')
       window = grabWindow()

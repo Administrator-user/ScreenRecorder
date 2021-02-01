@@ -38,7 +38,7 @@ class grabWindow(QWidget):
             height = desktop.height()
             #设置窗口大小+标题+图标+无边框+透明度
             self.setFixedSize(width*0.66,height*0.75)
-            self.setWindowTitle("ScreenRecorder-v1.0.0")
+            self.setWindowTitle("ScreenRecorder-v2.0.0")
             self.setWindowIcon(QIcon("./icon.png"))
             self.setWindowFlags(Qt.FramelessWindowHint)
             self.setWindowOpacity(0.9)

@@ -31,6 +31,20 @@ class grabWindow(QWidget):
             os.remove("TempFiles/tickShot.jpg")
             event.accept()
 
+      #格式化文件大小
+      def formatSize(self,size):
+            resultSize = size
+            units = ["B","KB","MB","GB"]
+            unitIndex = 0
+            while resultSize >= 1:
+                  resultSize /= 1024
+                  unitIndex += 1
+            resultSize *= 1024
+            unitIndex -= 1
+            unit = units[unitIndex]
+            result = str(round(resultSize,2))+unit
+            return result
+
       def createGui(self):
             #获取屏幕大小
             desktop = QApplication.desktop()
@@ -435,7 +449,7 @@ class grabWindow(QWidget):
             recTabs.addTab(videosWidget,
                            QIcon("./ctrlButtons/videoList/listTabIcon.svg"),"视频列表")
             videoTable = QTableWidget(0,5,videosWidget)
-            videoTable.setHorizontalHeaderLabels(["名称","类型","录制时间","时长","大小"])
+            videoTable.setHorizontalHeaderLabels(["名称","类型","创建时间","时长","大小"])
             videoTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
             videoTable.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
             videoTable.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -492,6 +506,42 @@ class grabWindow(QWidget):
             ''')
             videoTable.setFixedSize(width*0.645,height*0.32)
             videoTable.move(width*0.005,height*0.01)
+            #遍历videos文件夹
+            videoList = os.listdir("./videos")
+            videoTable.setRowCount(len(videoList))
+            for i in range(len(videoList)):
+                  name = videoList[i]
+                  videoTable.setItem(i,0,QTableWidgetItem(name))
+                  fileType = name.split(".")[1]+"文件"
+                  videoTable.setItem(i,1,QTableWidgetItem(fileType))
+                  
+                  '''
+                  格式化时间
+                  原因:time.strftime()无法直接对os.path.getctime()的返回值格式化
+                  执行流程:
+                  1.获取创建时间;
+                  2.使用time.ctime()转换时间格式并拆分;
+                  3.列出月份列表(time.ctime()格式化后月份是字母格式);
+                  4.格式化为tuple形式(年份,月份,日期,时,分,秒,1,1,0)
+                  (倒数第2~3个在后方无需使用,可直接用任意数字代替);
+                  5.将tuple中内容全部转为int形式;
+                  6.使用time.strftime()进行格式化;
+                  7.以str形式添加进QTableWidget中;
+                  '''
+                  createTime = os.path.getctime("videos/"+name)
+                  cList = time.ctime(createTime).split()
+                  monthList = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep",
+                               "Oct","Nov","Dec"]
+                  formatTime = (cList[4],monthList.index(cList[1])+1,cList[2],cList[3][0:2],
+                                cList[3][3:5],cList[3][6:8],1,1,0)
+                  formatTime = tuple([int(x) for x in formatTime])
+                  formatTime = time.strftime("%Y/%m/%d %H:%M:%S",formatTime)
+                  videoTable.setItem(i,2,QTableWidgetItem(str(formatTime)))
+                  
+                  unFormatSize = os.path.getsize("videos/"+name)
+                  fileSize = self.formatSize(unFormatSize)
+                  videoTable.setItem(i,4,QTableWidgetItem(fileSize))
+            #提示组件
             videoTips = QWidget(videosWidget)
             videoTips.setStyleSheet('''
             QWidget{
@@ -507,6 +557,30 @@ class grabWindow(QWidget):
                   videoTips.show()
             else:
                   videoTips.hide()
+            #清空列表
+            def clearList():
+                  for f in os.listdir("videos"):
+                        os.remove("videos/"+f)
+                  videoTable.setRowCount(0)
+                  videoTips.show()
+            clearAll = QToolButton(videosWidget)
+            clearAll.setStyleSheet('''
+            QToolButton{
+                  border:none;
+                  border-radius:10px;
+                  background:#ececec;
+                  border-image:url(./ctrlButtons/videoList/cleanList.svg);
+            }
+            QToolButton:hover{
+                  background:#cfcfcf;
+            }
+            QToolButton:pressed{
+                  background:#bfbfbf;
+            }
+            ''')
+            clearAll.setFixedSize(width*0.022,width*0.022)
+            clearAll.move(width*0.007,height*0.332)
+            clearAll.clicked.connect(clearList)
             
             #录制组件
             recWidget = QWidget(self)
@@ -557,19 +631,6 @@ class grabWindow(QWidget):
             stopbtn.setShortcut("Ctrl+Q")
             stopbtn.setFixedSize(width*0.02,width*0.02)
             stopbtn.move(width*0.135,height*0.01)
-            #格式化文件大小
-            def formatSize(size):
-                  resultSize = size
-                  units = ["B","KB","MB","GB"]
-                  unitIndex = 0
-                  while resultSize >= 1:
-                        resultSize /= 1024
-                        unitIndex += 1
-                  resultSize *= 1024
-                  unitIndex -= 1
-                  unit = units[unitIndex]
-                  result = str(round(resultSize,2))+unit
-                  return result
             #添加行
             def addInfo(itemName,itemDate,itemTime):
                   rowsPlus = videoTable.rowCount()+1
@@ -578,7 +639,7 @@ class grabWindow(QWidget):
                   videoTable.setItem(rowsPlus-1,1,QTableWidgetItem("avi文件"))
                   videoTable.setItem(rowsPlus-1,2,QTableWidgetItem(itemDate))
                   videoTable.setItem(rowsPlus-1,3,QTableWidgetItem(itemTime))
-                  itemSize = formatSize(os.path.getsize("videos/"+itemName))
+                  itemSize = self.formatSize(os.path.getsize("videos/"+itemName))
                   videoTable.setItem(rowsPlus-1,4,QTableWidgetItem(itemSize))
             def stopRecord():
                   self.escRec = True
@@ -680,7 +741,7 @@ class grabWindow(QWidget):
                               recTimer.display(self.returnTime)
                         else:
                               recTime = 0
-                              break
+                              continue
             #录制功能
             def record():
                   fps = 24#帧率

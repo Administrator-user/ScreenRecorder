@@ -1,2 +1,2 @@
 Don't delete the "TempFiles" folder , the program store all cache files here.
-If the program shutdown normal , all cache files will be delete.
+If the program shutdown normal , all cache files will be delete(Not included "lengthInfo.txt").

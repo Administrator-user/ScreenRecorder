@@ -2,4 +2,5 @@
 
 v0.1.0:The first vision of Screen Recorder;<-----┐
 v0.3.0:Fixed some bugs and add some functions;---┘(merged)-----------------------------┐
-v1.0.0:Add many functions like "Specified area recording" and "Choose record mode";----┘（merged）
+v1.0.0:Add many functions like "Specified area recording" and "Choose record mode";----┘(merged)------------------------------------------------┐
+v2.0.0:Change the icon , add many functions like the "Video List" function and some optimizations for the function "Specified Area Recording";--┘(merged)

@@ -2,6 +2,7 @@ from PyQt5.Qt import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PIL import ImageGrab
+import formatTools
 import numpy as np
 import threading
 import time
@@ -30,20 +31,6 @@ class grabWindow(QWidget):
       def closeEvent(self,event):
             os.remove("TempFiles/tickShot.jpg")
             event.accept()
-
-      #格式化文件大小
-      def formatSize(self,size):
-            resultSize = size
-            units = ["B","KB","MB","GB"]
-            unitIndex = 0
-            while resultSize >= 1:
-                  resultSize /= 1024
-                  unitIndex += 1
-            resultSize *= 1024
-            unitIndex -= 1
-            unit = units[unitIndex]
-            result = str(round(resultSize,2))+unit
-            return result
 
       def createGui(self):
             #获取屏幕大小
@@ -509,38 +496,36 @@ class grabWindow(QWidget):
             #遍历videos文件夹
             videoList = os.listdir("./videos")
             videoTable.setRowCount(len(videoList))
+            throwError = False
             for i in range(len(videoList)):
                   name = videoList[i]
                   videoTable.setItem(i,0,QTableWidgetItem(name))
                   fileType = name.split(".")[1]+"文件"
                   videoTable.setItem(i,1,QTableWidgetItem(fileType))
                   
-                  '''
-                  格式化时间
-                  原因:time.strftime()无法直接对os.path.getctime()的返回值格式化
-                  执行流程:
-                  1.获取创建时间;
-                  2.使用time.ctime()转换时间格式并拆分;
-                  3.列出月份列表(time.ctime()格式化后月份是字母格式);
-                  4.格式化为tuple形式(年份,月份,日期,时,分,秒,1,1,0)
-                  (倒数第2~3个在后方无需使用,可直接用任意数字代替);
-                  5.将tuple中内容全部转为int形式;
-                  6.使用time.strftime()进行格式化;
-                  7.以str形式添加进QTableWidget中;
-                  '''
                   createTime = os.path.getctime("videos/"+name)
-                  cList = time.ctime(createTime).split()
-                  monthList = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep",
-                               "Oct","Nov","Dec"]
-                  formatTime = (cList[4],monthList.index(cList[1])+1,cList[2],cList[3][0:2],
-                                cList[3][3:5],cList[3][6:8],1,1,0)
-                  formatTime = tuple([int(x) for x in formatTime])
-                  formatTime = time.strftime("%Y/%m/%d %H:%M:%S",formatTime)
-                  videoTable.setItem(i,2,QTableWidgetItem(str(formatTime)))
+                  formattedTime = formatTools.formatCtime(createTime)
+                  videoTable.setItem(i,2,QTableWidgetItem(str(formattedTime)))
+
+                  lenInf = open("./TempFiles/lengthInfo.txt","a+")
+                  lenInf.seek(0)
+                  lengths = lenInf.read()
+                  try:
+                        lenDict = eval(lengths)
+                  except:
+                        throwError = True
+                        lenDict = {}
+                  if name in lenDict:
+                        videoTable.setItem(i,3,QTableWidgetItem(lenDict[name]))
+                  lenInf.close()
                   
                   unFormatSize = os.path.getsize("videos/"+name)
-                  fileSize = self.formatSize(unFormatSize)
+                  fileSize = formatTools.formatSize(unFormatSize)
                   videoTable.setItem(i,4,QTableWidgetItem(fileSize))
+            if throwError:
+                  errorMsg = QMessageBox.critical(self,"错误",
+                                                  "无法解析lengthInfo.txt,请确保文件格式正确",
+                                                  QMessageBox.Ok,QMessageBox.Ok)
             #提示组件
             videoTips = QWidget(videosWidget)
             videoTips.setStyleSheet('''
@@ -557,10 +542,62 @@ class grabWindow(QWidget):
                   videoTips.show()
             else:
                   videoTips.hide()
+            #删除选中项
+            def clearSelect():
+                  clearItems = videoTable.selectedItems()
+                  #获取选中行"名称"值+行号
+                  clearNames = [i.text() for i in clearItems if clearItems.index(i)%5==0]
+                  clearRows = [i.row() for i in clearItems if clearItems.index(i)%5==0]
+                  #删除选中项
+                  for i in range(len(clearRows)):
+                        videoTable.removeRow(clearRows[0])
+                  #删除文件
+                  for i in clearNames:
+                        os.remove("videos/"+i)
+                  #删除字典键值对
+                  lenInfo = open("./TempFiles/lengthInfo.txt","a+")
+                  lenInfo.seek(0)
+                  try:
+                        oldDict = eval(lenInfo.read())
+                  except:
+                        oldDict = {}
+                  lenInfo.truncate(0)
+                  for n in clearNames:
+                        if n in oldDict:
+                              del oldDict[n]
+                  newDict = str(oldDict)
+                  lenInfo.write(newDict)
+                  lenInfo.close()
+                  #判断行数
+                  if videoTable.rowCount() < 1:
+                        videoTips.show()
+                  else:
+                        videoTips.hide()
+            clearSelection = QToolButton(videosWidget)
+            clearSelection.setStyleSheet('''
+            QToolButton{
+                  border:none;
+                  border-radius:10px;
+                  background:#ececec;
+                  border-image:url(./ctrlButtons/videoList/cleanSelect.svg);
+            }
+            QToolButton:hover{
+                  background:#cfcfcf;
+            }
+            QToolButton:pressed{
+                  background:#bfbfbf;
+            }
+            ''')
+            clearSelection.setToolTip("删除选中项")
+            clearSelection.setFixedSize(width*0.022,width*0.022)
+            clearSelection.move(width*0.007,height*0.332)
+            clearSelection.clicked.connect(clearSelect)
             #清空列表
             def clearList():
                   for f in os.listdir("videos"):
                         os.remove("videos/"+f)
+                  lenFile = open("./TempFiles/lengthInfo.txt","a+")
+                  lenFile.truncate(0)
                   videoTable.setRowCount(0)
                   videoTips.show()
             clearAll = QToolButton(videosWidget)
@@ -578,8 +615,9 @@ class grabWindow(QWidget):
                   background:#bfbfbf;
             }
             ''')
+            clearAll.setToolTip("清空列表")
             clearAll.setFixedSize(width*0.022,width*0.022)
-            clearAll.move(width*0.007,height*0.332)
+            clearAll.move(width*0.03,height*0.332)
             clearAll.clicked.connect(clearList)
             
             #录制组件
@@ -633,14 +671,27 @@ class grabWindow(QWidget):
             stopbtn.move(width*0.135,height*0.01)
             #添加行
             def addInfo(itemName,itemDate,itemTime):
+                  lenInfo = open("./TempFiles/lengthInfo.txt","a+")
+                  lenInfo.seek(0)
+                  oldInfo = lenInfo.read()#读取原内容
+                  oldInfo = oldInfo.replace("{","")
+                  oldInfo = oldInfo.replace("}","")
+                  lenInfo.truncate(0)
                   rowsPlus = videoTable.rowCount()+1
                   videoTable.setRowCount(rowsPlus)
                   videoTable.setItem(rowsPlus-1,0,QTableWidgetItem(itemName))
                   videoTable.setItem(rowsPlus-1,1,QTableWidgetItem("avi文件"))
                   videoTable.setItem(rowsPlus-1,2,QTableWidgetItem(itemDate))
                   videoTable.setItem(rowsPlus-1,3,QTableWidgetItem(itemTime))
-                  itemSize = self.formatSize(os.path.getsize("videos/"+itemName))
+                  #写入信息
+                  if oldInfo:
+                        lenInfo.write("{"+oldInfo+",\'"+itemName+"\':\'"+itemTime+"\'}")
+                  else:
+                        lenInfo.write("{"+oldInfo+"\'"+itemName+"\':\'"+itemTime+"\'}")
+                  
+                  itemSize = formatTools.formatSize(os.path.getsize("videos/"+itemName))
                   videoTable.setItem(rowsPlus-1,4,QTableWidgetItem(itemSize))
+                  lenInfo.close()
             def stopRecord():
                   self.escRec = True
                   #还原窗口

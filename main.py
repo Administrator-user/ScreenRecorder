@@ -779,7 +779,7 @@ class grabWindow(QWidget):
                   recTime = 0
                   self.returnTime = "00:00"
                   while True:
-                        if self.isRecording or not self.escRec:
+                        if self.isRecording and not self.escRec:
                               time.sleep(1)
                               recTime += 1
                               recMin = str(int(recTime/60))
@@ -790,9 +790,9 @@ class grabWindow(QWidget):
                                     recSec = "0"+str(recSec)
                               self.returnTime = recMin+":"+recSec
                               recTimer.display(self.returnTime)
-                        else:
+                        elif self.escRec:
                               recTime = 0
-                              continue
+                              break
             #录制功能
             def record():
                   fps = 24#帧率
@@ -811,6 +811,8 @@ class grabWindow(QWidget):
                   video = cv2.VideoWriter(videoName,cv2.VideoWriter_fourcc(*"XVID"),
                                           fps,(heightS,widthS))#创建视频
                   imgNum = 0
+                  stopbtn.setEnabled(False)
+                  pausebtn.setEnabled(False)
                   recTimer.display(start)
                   for i in range(start):
                         time.sleep(1)
@@ -818,6 +820,8 @@ class grabWindow(QWidget):
                   timerThread = threading.Thread(target=displayTime,
                                                  name="TimeDisplay")
                   timerThread.start()
+                  stopbtn.setEnabled(True)
+                  pausebtn.setEnabled(True)
                   while True:
                         if self.isRecording:
                               imgNum += 1
@@ -848,25 +852,25 @@ class grabWindow(QWidget):
                         minbtn.setEnabled(False)
                         maxbtn.setEnabled(False)
                         closebtn.setEnabled(False)
-                        self.escRec = False
                         isRecording = True
                         recordThread = threading.Thread(target=record,
                                                         name="Recorder")
                         recordThread.start()
-                  except:
-                        pass
+                        self.escRec = False
+                  except Exception as exc:
+                        print(exc)
             def startRecord():
                   try:
                         grabReady()
-                  except:
-                        pass
+                  except Exception as exc:
+                        print(exc)
             recbtn.clicked.connect(startRecord)
 
             self.show()
 
 if __name__ == "__main__":
       app = QApplication(sys.argv)
-      print('''ScreenRecorder v2.0.0
+      print('''ScreenRecorder v2.2.0
 made by Administrator-user
 Loading project...''')
       window = grabWindow()

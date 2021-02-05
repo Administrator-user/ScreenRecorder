@@ -853,13 +853,13 @@ class grabWindow(QWidget):
                         recordThread = threading.Thread(target=record,
                                                         name="Recorder")
                         recordThread.start()
-                  except Exception as exc:
-                        print(exc)
+                  except:
+                        pass
             def startRecord():
                   try:
                         grabReady()
-                  except Exception as exc:
-                        print(exc)
+                  except:
+                        pass
             recbtn.clicked.connect(startRecord)
 
             self.show()

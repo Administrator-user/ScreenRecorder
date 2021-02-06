@@ -39,7 +39,7 @@ class grabWindow(QWidget):
             height = desktop.height()
             #设置窗口大小+标题+图标+无边框+透明度
             self.setFixedSize(width*0.66,height*0.75)
-            self.setWindowTitle("ScreenRecorder-v2.2.1")
+            self.setWindowTitle("ScreenRecorder-v2.2.3")
             self.setWindowIcon(QIcon("./icon.png"))
             self.setWindowFlags(Qt.FramelessWindowHint)
             self.setWindowOpacity(0.9)
@@ -550,7 +550,8 @@ class grabWindow(QWidget):
                   clearRows = [i.row() for i in clearItems if clearItems.index(i)%5==0]
                   #删除选中项
                   for i in range(len(clearRows)):
-                        videoTable.removeRow(clearRows[0])
+                        videoTable.removeRow(i)
+                        clearRows = [x-1 for x in clearRows]
                   #删除文件
                   for i in clearNames:
                         os.remove("videos/"+i)
@@ -814,6 +815,22 @@ class grabWindow(QWidget):
                   stopbtn.setEnabled(False)
                   pausebtn.setEnabled(False)
                   recTimer.display(start)
+                  pausebtn.setStyleSheet('''
+                  QToolButton{
+                        background:#ececec;
+                        border-style:outset;
+                        border-radius:7px;
+                        border-width:0px;
+                        border-image:url(./ctrlButtons/pauseRecord.png)
+                  }
+                  QToolButton:hover{
+                        background:#d0d0d0;
+                  }
+                  QToolButton:pressed{
+                        background:#bababa;
+                  }
+                  ''')
+                  self.isRecording = True
                   for i in range(start):
                         time.sleep(1)
                         recTimer.display(start-i)
@@ -870,7 +887,7 @@ class grabWindow(QWidget):
 
 if __name__ == "__main__":
       app = QApplication(sys.argv)
-      print('''ScreenRecorder v2.2.1
+      print('''ScreenRecorder v2.2.3
 made by Administrator-user
 Loading project...''')
       window = grabWindow()

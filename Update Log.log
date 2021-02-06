@@ -6,3 +6,4 @@ v1.0.0:Add many functions like "Specified area recording" and "Choose record mod
 v2.0.0:Change the icon , add many functions like the "Video List" function and some optimizations for the function "Specified Area Recording";--┘(merged)---┐
 v2.2.0:Add the "Clear Selections" function , do some optimizations , fixed some bugs and update the icon;---------------------------------------------------┘(merged)--┐
 v2.2.1:Fix some bugs in the timer;-------------------------------------------------------------------------------------------------------------------------------------┘(merged)
+v2.2.3:Fix some bugs and do some optimizations;------------┘(merged)

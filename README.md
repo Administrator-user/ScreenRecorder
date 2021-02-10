@@ -5,3 +5,4 @@ Please install python 3 and the following packages:PyQt5,PyQt5-tools,Pillow,Nump
 Install command:pip install (PACKAGE NAME).
 If the download speed is too slow,you can use the "-i" opition to install these packages.
 THANKS FOR USING!
+ 
